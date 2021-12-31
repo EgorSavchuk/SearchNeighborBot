@@ -13,7 +13,7 @@ def bot_start():
         keyboard.add(types.InlineKeyboardButton(text="Создать анкету", callback_data="create_form"))
         await bot.send_photo(message.from_user.id, photo=logo,
                              caption=f'<b>Привет,  {message.from_user.first_name}</b> '
-                             f'😃 {welcome_message}', reply_markup=keyboard)
+                             f'😃\n{welcome_message}', reply_markup=keyboard)
 
     @dp.message_handler(commands="help")
     async def cmd_start(message: types.Message):

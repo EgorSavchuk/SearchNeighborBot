@@ -25,6 +25,7 @@ class ChangeApartmentOwnerForm(StatesGroup):
     load_apartment_images = State()
     check_changes = State()
 
+
 # -------------------------------------------------------------------------------------------------------------------- #
 
 
@@ -36,7 +37,7 @@ async def change_form(message, user_form):
     else:
         await ChangeApartmentOwnerForm.ask_field.set()
 
-# -------------------------------------- Изменяем анкету искателя квартиры ------------------------------------------- #
+    # -------------------------------------- Изменяем анкету искателя квартиры ------------------------------------------- #
     # Проверка выбора изменяемого поля
     @dp.message_handler(lambda message: not message.text.isdigit(), state=ChangeSearcherForm.ask_field)
     async def process_price_invalid(message: types.Message):
@@ -52,6 +53,7 @@ async def change_form(message, user_form):
     @dp.message_handler(state=ChangeSearcherForm.ask_field)
     async def check_command(message: types.Message, state: FSMContext):
         async with state.proxy() as data:
+            # TODO почему-то не выходит из изменения анкеты при вводе 12
             data['field'] = int(message.text)
         if data['field'] == 12:
             await message.answer("Изменение анкеты прекращено")
@@ -85,9 +87,9 @@ async def change_form(message, user_form):
                 await message.answer("Данные успешно обновлены", reply_markup=markup)
                 await state.finish()
 
-# -------------------------------------------------------------------------------------------------------------------- #
+    # -------------------------------------------------------------------------------------------------------------------- #
 
-# -------------------------------------- Изменяем анкету владельца квартиры ------------------------------------------ #
+    # -------------------------------------- Изменяем анкету владельца квартиры ------------------------------------------ #
     @dp.message_handler(lambda message: not message.text.isdigit(), state=ChangeApartmentOwnerForm.ask_field)
     async def process_price_invalid(message: types.Message):
         return await message.reply("Выбери значение из списка, цифрой")
@@ -155,6 +157,8 @@ async def change_form(message, user_form):
                     await write_apartment_owner_changes(message, field, data)
                 await message.answer("Данные успешно обновлены")
                 await state.finish()
+
+
 # -------------------------------------------------------------------------------------------------------------------- #
 
 
@@ -226,9 +230,9 @@ async def check_main_changes(field, message: types.Message):
         await message.answer("Автору реально 0 лет?\nВведи корректное значение")
     elif field == 3 and int(message.text) > 118:
         await message.answer(f"Самому старому человеку (из ныне живущих) 2 января 2021 исполняется 118 лет\n"
-                               f"Если тебе действительно {message.text}, советую обратиться сюда\n"
-                               f"https://www.guinnessworldrecords.com/ \nКак только ты там появишься я сразу создам"
-                               f" твою анкету, а пока что введи возраст поменьше")
+                             f"Если тебе действительно {message.text}, советую обратиться сюда\n"
+                             f"https://www.guinnessworldrecords.com/ \nКак только ты там появишься я сразу создам"
+                             f" твою анкету, а пока что введи возраст поменьше")
     elif field == 4 and message.text not in ['М', 'Ж']:
         await message.answer("Такого пола не знаю, выбери значение с клавиатуры")
     elif field == 5 and message.text not in ['1', '2', '3', '4', '5', '6', 'Выпускник']:
@@ -292,6 +296,7 @@ async def answer_what_change_apartment_owner(field, message: types.Message):
         await message.answer("Введи новое описание квартиры")
     elif field == 14:
         await message.answer("Загрузи новые фотографии квартиры")
+
 
 # -------------------------------------------------------------------------------------------------------------------- #
 
