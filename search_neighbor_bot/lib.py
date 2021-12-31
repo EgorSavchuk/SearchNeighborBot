@@ -46,6 +46,7 @@ match_message = "🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉\n\n\n<b>  
                                           "<i> Он находится в разделе 'мои мэтчи'</i>"
 
 
+# Функция, выводящее правльную форму слова лет, года, год (для анкеты)
 def get_current_age_name(age):
     if age % 10 == 1 and age != 11 and age % 100 != 11:
         return 'год'
@@ -55,6 +56,7 @@ def get_current_age_name(age):
         return 'лет'
 
 
+# Функция, выводящее цену в формате 10.000, разделяет точкой
 def get_price_to_view(price):
     result_price = ''
     price = str(price)
@@ -68,6 +70,7 @@ def get_price_to_view(price):
         return result_price
 
 
+# Возвращает pk пользователя по chat_id
 def get_pk_from_chat_id(chat_id):
     from bot.models import UserGeneralInformation
     if UserGeneralInformation.objects.filter(chat_id=chat_id).exists():
@@ -78,6 +81,7 @@ def get_pk_from_chat_id(chat_id):
         return 'Error: get_pk_from_chat_id: Пользователя не существует'
 
 
+# Выводит анкету
 async def print_form(user_form, message, bot, for_searching=False):
     if for_searching:
         keyboard = types.InlineKeyboardMarkup()
@@ -92,6 +96,7 @@ async def print_form(user_form, message, bot, for_searching=False):
         await bot.send_photo(message.chat.id, photo=user_form.avatar, caption=user_form.caption, reply_markup=keyboard)
 
 
+# Выводит сообщение в котором спрашивается какой пункт хочет изменить пользователь
 def get_change_caption(user_form):
     caption = f'<b>0</b> - Аватарку\n' \
               f'<b>1</b> - Имя\n' \
@@ -119,6 +124,7 @@ def get_change_caption(user_form):
     return caption
 
 
+# -------------------------------- Функции для корректного ввода значений в бд ----------------------------------------#
 def insert_current_gender(input_string) -> bool:
     result_value = 'Error'
     if input_string == 'М':
@@ -171,8 +177,10 @@ def insert_current_user_point(input_value) -> int:
     elif input_value == 'Квартиру':
         result_value = 2
     return int(result_value)
+# -------------------------------------------------------------------------------------------------------------------- #
 
 
+# Проверяет существует ли анкета у пользователя
 @sync_to_async
 def check_user(chat_id):
     if get_pk_from_chat_id(chat_id) == 'Error: get_pk_from_chat_id: Пользователя не существует':

@@ -25,7 +25,10 @@ class ChangeApartmentOwnerForm(StatesGroup):
     load_apartment_images = State()
     check_changes = State()
 
+# -------------------------------------------------------------------------------------------------------------------- #
 
+
+# Функция, вызываемая из homeet_bot.py
 async def change_form(message, user_form):
     await message.answer("Введи цифру того поля, значение которого хочешь изменить\n" + get_change_caption(user_form))
     if user_form.apartment_photos == 'None':
