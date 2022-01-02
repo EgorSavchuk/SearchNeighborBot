@@ -153,12 +153,10 @@ class UsersMatch:
 
 
 async def send_notification(chat1, chat2):
-    # TODO вылетела ошибка при отправке мэтча Юре, нужно проверить
     from lib import match_message
     try:
         await bot.send_message(chat1, match_message)
         await send_match_form(chat1, chat2)
-        await print_error(chat1)
     except:
         await print_error(chat1)
     try:
