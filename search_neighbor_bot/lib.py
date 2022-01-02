@@ -41,9 +41,7 @@ help_message = f"<b>Как работает этот бот?</b>\n\nДля на�
                "Функция 'Смотреть мэтчи' - Здесь собраны все твои мэтчи\n\n" \
                "Ты всегда можешь изменить свою анкету, либо создать новую"
 
-match_message = "🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉\n\n\n<b>               У вас новый match!</b>\n\n\n"\
-                                          "🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉\n"\
-                                          "<i> Он находится в разделе 'мои мэтчи'</i>"
+match_message = "🎉  <b>У вас новый match!</b>  🎉\n"
 
 
 # Функция, выводящее правльную форму слова лет, года, год (для анкеты)
@@ -82,18 +80,27 @@ def get_pk_from_chat_id(chat_id):
 
 
 # Выводит анкету
-async def print_form(user_form, message, bot, for_searching=False):
+async def print_form(user_form, message, bot, for_searching=False, for_notification=0):
     if for_searching:
         keyboard = types.InlineKeyboardMarkup()
         keyboard.add(types.InlineKeyboardButton(text="👎", callback_data="dislike"),
                      types.InlineKeyboardButton(text="👍", callback_data="like"))
     else:
         keyboard = types.ReplyKeyboardRemove()
-    if user_form.apartment_photos != 'None':
-        await bot.send_photo(message.chat.id, photo=user_form.avatar, caption=user_form.caption, reply_markup=keyboard)
-        await message.answer_media_group(media=user_form.apartment_photos)
+    if for_notification != 0:
+        if user_form.apartment_photos != 'None':
+            await bot.send_photo(for_notification, photo=user_form.avatar, caption=user_form.caption,
+                                 reply_markup=keyboard)
+            await bot.send_media_group(for_notification, media=user_form.apartment_photos)
+        else:
+            await bot.send_photo(for_notification, photo=user_form.avatar, caption=user_form.caption,
+                                 reply_markup=keyboard)
     else:
-        await bot.send_photo(message.chat.id, photo=user_form.avatar, caption=user_form.caption, reply_markup=keyboard)
+        if user_form.apartment_photos != 'None':
+            await bot.send_photo(message.chat.id, photo=user_form.avatar, caption=user_form.caption, reply_markup=keyboard)
+            await message.answer_media_group(media=user_form.apartment_photos)
+        else:
+            await bot.send_photo(message.chat.id, photo=user_form.avatar, caption=user_form.caption, reply_markup=keyboard)
 
 
 # Выводит сообщение в котором спрашивается какой пункт хочет изменить пользователь
@@ -122,6 +129,33 @@ def get_change_caption(user_form):
                    f'<b>14</b> - Фотографии квартиры\n' \
                    f'<b>15</b> - Отмена\n{comment}'
     return caption
+
+
+def get_change_caption_v2(user_form):
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text='Аватарку', callback_data='0'))
+    keyboard.add(types.InlineKeyboardButton(text='Имя', callback_data='1'))
+    keyboard.add(types.InlineKeyboardButton(text='О себе', callback_data='2'))
+    keyboard.add(types.InlineKeyboardButton(text='Возраст', callback_data='3'))
+    keyboard.add(types.InlineKeyboardButton(text='Пол', callback_data='4'))
+    keyboard.add(types.InlineKeyboardButton(text='Курс', callback_data='5'))
+    keyboard.add(types.InlineKeyboardButton(text='Ссылки на соцсети', callback_data='6'))
+    keyboard.add(types.InlineKeyboardButton(text='Какого соседа хочешь найти', callback_data='7'))
+    keyboard.add(types.InlineKeyboardButton(text='Желаемый пол соседа', callback_data='8'))
+    keyboard.add(types.InlineKeyboardButton(text='Желаемый курс соседа', callback_data='9'))
+    if user_form.apartment_photos == 'None':
+        keyboard.add(types.InlineKeyboardButton(text='Цена за квартиру', callback_data='10'))
+        keyboard.add(types.InlineKeyboardButton(text='Станции метро', callback_data='11'))
+        keyboard.add(types.InlineKeyboardButton(text='Назад', callback_data='12'))
+    else:
+        keyboard.add(types.InlineKeyboardButton(text='Цена квартиры', callback_data='10'))
+        keyboard.add(types.InlineKeyboardButton(text='Станция метро кваритры', callback_data='11'))
+        keyboard.add(types.InlineKeyboardButton(text='Адрес квартиры', callback_data='12'))
+        keyboard.add(types.InlineKeyboardButton(text='Время до корпусов вышки', callback_data='13'))
+        keyboard.add(types.InlineKeyboardButton(text='Описание квартиры', callback_data='14'))
+        keyboard.add(types.InlineKeyboardButton(text='Фотографии квартиры', callback_data='15'))
+        keyboard.add(types.InlineKeyboardButton(text='Назад', callback_data='16'))
+    return keyboard
 
 
 # -------------------------------- Функции для корректного ввода значений в бд ----------------------------------------#

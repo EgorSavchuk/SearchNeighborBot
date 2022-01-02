@@ -1,4 +1,4 @@
-from lib import get_change_caption, insert_current_gender, insert_current_user_class
+from lib import insert_current_gender, insert_current_user_class, get_change_caption_v2
 from lib import insert_current_neighbor_gender, insert_current_neighbor_class
 from bot.models import UserGeneralInformation, UserCriteria, ApartmentOwner
 from createbot import dp
@@ -31,38 +31,28 @@ class ChangeApartmentOwnerForm(StatesGroup):
 
 # Функция, вызываемая из homeet_bot.py
 async def change_form(message, user_form):
-    await message.answer("Введи цифру того поля, значение которого хочешь изменить\n" + get_change_caption(user_form))
+    keyboard = get_change_caption_v2(user_form)
+    await message.answer("Какое поле ты хочешь изменить?", reply_markup=keyboard)
     if user_form.apartment_photos == 'None':
         await ChangeSearcherForm.ask_field.set()
     else:
         await ChangeApartmentOwnerForm.ask_field.set()
 
-    # -------------------------------------- Изменяем анкету искателя квартиры ------------------------------------------- #
-    # Проверка выбора изменяемого поля
-    @dp.message_handler(lambda message: not message.text.isdigit(), state=ChangeSearcherForm.ask_field)
-    async def process_price_invalid(message: types.Message):
-        return await message.reply("Выбери значение из списка, цифрой")
-
-    # Проверка выбора изменяемого поля
-    @dp.message_handler(lambda message: int(message.text) not in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                        state=ChangeSearcherForm.ask_field)
-    async def process_price_invalid(message: types.Message):
-        return await message.reply("Введи значение в правильном формате")
-
+# -------------------------------------- Изменяем анкету искателя квартиры ------------------------------------------- #
     # Сохранение выбора пользователя и вызов соответсвующей функции для вывода вопроса про изменяемое поле
-    @dp.message_handler(state=ChangeSearcherForm.ask_field)
-    async def check_command(message: types.Message, state: FSMContext):
+    @dp.callback_query_handler(state=ChangeSearcherForm.ask_field)
+    async def check_command(call: types.CallbackQuery, state: FSMContext):
         async with state.proxy() as data:
-            # TODO почему-то не выходит из изменения анкеты при вводе 12
-            data['field'] = int(message.text)
+            data['field'] = int(call.data)
         if data['field'] == 12:
-            await message.answer("Изменение анкеты прекращено")
             await state.finish()
-        elif int(message.text) <= 9:
-            await answer_what_change_main(int(message.text), message)
+            await message.answer("Изменение анкеты прекращено")
+        elif data['field'] <= 9:
+            await answer_what_change_main(int(call.data), call.message)
+            await ChangeSearcherForm.next()
         else:
-            await answer_what_change_searcher(int(message.text), message)
-        await ChangeSearcherForm.next()
+            await answer_what_change_searcher(int(call.data), call.message)
+            await ChangeSearcherForm.next()
 
     @dp.message_handler(content_types=['photo'], state=ChangeSearcherForm.check_changes)
     async def check_changes_photo(message: types.Message, state: FSMContext):
@@ -76,7 +66,7 @@ async def change_form(message, user_form):
     async def check_changes(message: types.Message, state: FSMContext):
         async with state.proxy() as data:
             field = data['field']
-            if field == 10 and (not message.text.isdigit() or int(message.text) > 99999) and field != 0:
+            if field == 10 and (not message.text.isdigit() or int(message.text) > 999999) and field != 0:
                 await message.answer("Введи цену в правильном формате:\nЧислом, до 99999")
             elif await check_main_changes(data['field'], message) == 'Ok' and field != 0:
                 if field <= 9:
@@ -87,60 +77,47 @@ async def change_form(message, user_form):
                 await message.answer("Данные успешно обновлены", reply_markup=markup)
                 await state.finish()
 
-    # -------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
 
-    # -------------------------------------- Изменяем анкету владельца квартиры ------------------------------------------ #
-    @dp.message_handler(lambda message: not message.text.isdigit(), state=ChangeApartmentOwnerForm.ask_field)
-    async def process_price_invalid(message: types.Message):
-        return await message.reply("Выбери значение из списка, цифрой")
-
-    # Проверка выбора изменяемого поля
-    @dp.message_handler(lambda message: int(message.text) not in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                        state=ChangeApartmentOwnerForm.ask_field)
-    async def process_price_invalid(message: types.Message):
-        return await message.reply("Введи значение в правильном формате")
-
-    @dp.message_handler(state=ChangeApartmentOwnerForm.ask_field)
-    async def check_command(message: types.Message, state: FSMContext):
-        if int(message.text) in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]:
-            async with state.proxy() as data:
-                data['field'] = int(message.text)
-                data["apartment_images"] = []
-            if data['field'] == 15:
-                await state.finish()
-                await message.answer("Изменение анкеты прекращено")
-            elif int(message.text) <= 9:
-                await answer_what_change_main(int(message.text), message)
-                await ChangeApartmentOwnerForm.check_changes.set()
-            elif int(message.text) == 14:
-                await message.answer("Загрузи новые фотографии квартиры")
-                await ChangeApartmentOwnerForm.next()
-            else:
-                await answer_what_change_apartment_owner(int(message.text), message)
-                await ChangeApartmentOwnerForm.check_changes.set()
-        else:
-            await message.answer("Введено неправильное значение, вызови функцию изменения анкеты заново")
+# -------------------------------------- Изменяем анкету владельца квартиры ------------------------------------------ #
+    @dp.callback_query_handler(state=ChangeApartmentOwnerForm.ask_field)
+    async def check_command(call: types.CallbackQuery, state: FSMContext):
+        async with state.proxy() as data:
+            data['field'] = int(call.data)
+            data["apartment_images"] = []
+        if data['field'] == 16:
             await state.finish()
+            await message.answer("Изменение анкеты прекращено")
+        elif data['field'] <= 9:
+            await answer_what_change_main(int(call.data), call.message)
+            await ChangeApartmentOwnerForm.check_changes.set()
+        elif data['field'] == 15:
+            await message.answer("Загрузи новые фотографии квартиры")
+            await ChangeApartmentOwnerForm.next()
+        else:
+            await answer_what_change_apartment_owner(int(call.data), call.message)
+            await ChangeApartmentOwnerForm.check_changes.set()
 
     @dp.message_handler(content_types=['photo'], state=ChangeApartmentOwnerForm.load_apartment_images)
     async def load_photos(message: types.Message, state: FSMContext):
-        keyboard = types.InlineKeyboardMarkup()
-        keyboard.add(types.InlineKeyboardButton(text="Дальше", callback_data="next_for_change"))
+        keyboard_images = types.InlineKeyboardMarkup()
+        keyboard_images.add(types.InlineKeyboardButton(text="Дальше", callback_data="next_for_change"))
         async with state.proxy() as data:
             if len(data["apartment_images"]) == 9:
-                await message.reply("Больше 9 фотографий загрузить нельзя, нажми 'дальше'", reply_markup=keyboard)
+                await message.reply("Больше 9 фотографий загрузить нельзя, нажми 'дальше'",
+                                    reply_markup=keyboard_images)
             else:
                 data['apartment_images'].append(message.photo[0].file_id)
         if len(data["apartment_images"]) >= 2:
             await message.reply(f"Загрузи еще фотографии"
-                                f"\nЕсли это последняя фотография, нажми 'дальше'", reply_markup=keyboard)
+                                f"\nЕсли это последняя фотография, нажми 'дальше'", reply_markup=keyboard_images)
         elif len(data["apartment_images"]) != 9:
             await message.reply(f"Загрузи еще фотографии")
 
     @dp.callback_query_handler(text='next_for_change', state=ChangeApartmentOwnerForm.load_apartment_images)
     async def write_apartments_photo(call: types.CallbackQuery, state: FSMContext):
         async with state.proxy() as data:
-            await write_apartment_owner_changes(call.message, 14, data)
+            await write_apartment_owner_changes(call.message, 15, data)
         await state.finish()
         await call.message.answer("Фотографии обновлены")
 
@@ -211,11 +188,14 @@ def write_apartment_owner_changes(message: types.Message, field, data):
             chat_id=message.chat.id)[0]).update(metro=message.text)
     elif field == 12:
         ApartmentOwner.objects.filter(apartment_owner=UserGeneralInformation.objects.filter(
-            chat_id=message.chat.id)[0]).update(time_to_hse=message.text)
+            chat_id=message.chat.id)[0]).update(address=message.text)
     elif field == 13:
         ApartmentOwner.objects.filter(apartment_owner=UserGeneralInformation.objects.filter(
-            chat_id=message.chat.id)[0]).update(about_apartment=message.text)
+            chat_id=message.chat.id)[0]).update(time_to_hse=message.text)
     elif field == 14:
+        ApartmentOwner.objects.filter(apartment_owner=UserGeneralInformation.objects.filter(
+            chat_id=message.chat.id)[0]).update(about_apartment=message.text)
+    elif field == 15:
         ApartmentOwner.objects.filter(apartment_owner=UserGeneralInformation.objects.filter(
             chat_id=message.chat.id)[0]).update(apartment_images=data['apartment_images'])
 
@@ -291,10 +271,12 @@ async def answer_what_change_apartment_owner(field, message: types.Message):
     elif field == 11:
         await message.answer("Введи новое значение поля 'Станция метро квартиры'")
     elif field == 12:
-        await message.answer("Введи новое значение поля 'Время до корпусов вышки'")
+        await message.answer("Введи новое значение поля 'Точный адрес квартиры'")
     elif field == 13:
-        await message.answer("Введи новое описание квартиры")
+        await message.answer("Введи новое значение поля 'Время до корпусов вышки'")
     elif field == 14:
+        await message.answer("Введи новое описание квартиры")
+    elif field == 15:
         await message.answer("Загрузи новые фотографии квартиры")
 
 

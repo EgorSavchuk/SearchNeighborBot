@@ -33,7 +33,7 @@ def bot_start():
             from lib import print_form
             await print_form(user_form, message, bot)
         else:
-            await message.answer("Анкеты не существует")
+            await message.answer("Анкеты еще не создана")
 
     @dp.message_handler(commands="change_profile")
     async def change_profile(message: types.Message):
@@ -45,7 +45,7 @@ def bot_start():
                 result_user_form = get_form(message.chat.id)
                 return result_user_form
             user_form = await get_user_form()
-            await message.answer("Вот все данные из твоего профиля:\n" + user_form.full_info)
+            await message.answer("<b>Вот все данные из твоего профиля:</b>\n" + user_form.full_info)
             from changeform import change_form
             await change_form(message, user_form)
         else:
@@ -80,7 +80,7 @@ def bot_start():
             from watch_forms import show_profiles
             await show_profiles(message)
         else:
-            await message.answer("Анкеты не существует")
+            await message.answer("Для начала нужно создать анкету")
 
     @dp.message_handler(commands="delete_history")
     async def delete_history(message: types.Message):
@@ -89,7 +89,7 @@ def bot_start():
             await delete_history(message.chat.id)
             await message.answer("История просмотренных анкет удалена")
         else:
-            await message.answer("Анкеты не существует")
+            await message.answer("Для начала нужно создать анкету")
 
     @dp.message_handler(commands="watch_matches")
     async def watch_profiles(message: types.Message):
@@ -134,7 +134,7 @@ def bot_start():
                             watched_matches.append(match)
                             break
         else:
-            await message.answer("Анкеты не существует")
+            await message.answer("Для начала нужно создать анкету")
 
     @dp.message_handler()
     async def echo_send(message: types.Message):

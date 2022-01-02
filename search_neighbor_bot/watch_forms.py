@@ -153,15 +153,45 @@ class UsersMatch:
 
 
 async def send_notification(chat1, chat2):
+    # TODO вылетела ошибка при отправке мэтча Юре, нужно проверить
     from lib import match_message
     try:
         await bot.send_message(chat1, match_message)
+        await send_match_form(chat1, chat2)
+        await print_error(chat1)
     except:
-        print(f"Пользователь {chat1} отписался")
+        await print_error(chat1)
     try:
         await bot.send_message(chat2, match_message)
+        await send_match_form(chat2, chat1)
     except:
-        print(f"Пользователь {chat2} отписался")
+        await print_error(chat2)
+
+
+@sync_to_async
+def print_error(chat):
+    print(f"Пользователь {chat} отписался")
+
+
+@sync_to_async
+def get_match_form(chat_id):
+    from getform import get_form
+    result_user_form = get_form(chat_id, True)
+    return result_user_form
+
+
+@sync_to_async
+def get_pk(chat):
+    from lib import get_pk_from_chat_id
+    return get_pk_from_chat_id(chat)
+
+
+async def send_match_form(user, match):  # user - кому match - chat_id кто
+    from lib import print_form
+    form = await get_match_form(match)
+    await print_form(form, None, bot, for_searching=False, for_notification=user)
+    contacts = await get_contacts(await get_pk(match))
+    await bot.send_message(user, contacts)
 
 
 @sync_to_async
