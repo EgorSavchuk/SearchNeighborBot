@@ -3,6 +3,7 @@ import django
 import os
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "search_neighbor_bot.settings")
 django.setup()
+import logging
 
 
 # Класс для передачи в фунцию вывода анкеты в чат
@@ -20,7 +21,9 @@ def get_form(chat_id, only_profile: bool = False, pk='default'):
     from bot.models import UserGeneralInformation, UserStatus, UserCriteria
     if pk == 'default':
         pk = get_pk_from_chat_id(chat_id)
-    user = UserGeneralInformation.objects.filter(pk=pk)[0]
+    logging.warning(f'pk :: {pk}')
+    user = UserGeneralInformation.objects.filter(pk=pk).first()
+    logging.warning(f'user ::: {user}')
     user_status = UserStatus.objects.filter(status_for_user=user)[0]
     user_criteria = UserCriteria.objects.filter(for_user=user)[0]
     # ----------- переменные, используемые более двух раз ------------ #

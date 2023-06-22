@@ -400,6 +400,7 @@ async def load_photos(message: types.Message, state: FSMContext):
 async def get_profile(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         await save_apartment_owner(data)
+        await send_notify_new_form(data)
         await call.message.answer(str('<b>Твоя анкета готова!</b>\nВот все данные из нее:'))
         from getform import get_form
 
@@ -439,6 +440,7 @@ async def write_required_metro(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['user_required_metro'] = message.text
         await save_apartment_searcher(data)
+        await send_notify_new_form(data)
         await message.answer(str('<b>Твоя анкета готова!</b>\nВот все данные из нее:'))
         from getform import get_form
 
@@ -455,3 +457,70 @@ async def write_required_metro(message: types.Message, state: FSMContext):
         await state.finish()
 
 # ---------------------------------------------------------------------------------------------------------------------#
+
+
+async def send_notify_new_form(data):
+    pk = await get_user_pk(data)
+    users_chats = await get_all_user()
+    for user in users_chats:
+        if await check_criteria(user, pk) and await get_pk_from_chat_id(user) != pk:
+            try:
+                await bot.send_message(user, '<b>Появилась новая анкета для тебя!\n</b>'
+                                             'посмотреть можно в "смотреть анкеты"')
+            except:
+                print(f'Пользователь {user} отписался')
+
+
+@sync_to_async
+def get_all_user():
+    cur_users = UserGeneralInformation.objects.all()
+    chat_ids = []
+    for user in cur_users:
+        chat_ids.append(user.chat_id)
+    return chat_ids
+
+
+@sync_to_async
+def get_user_pk(data):
+    pk = UserGeneralInformation.objects.filter(chat_id=data['user_chat_id']).first().pk
+    return pk
+
+
+@sync_to_async
+def check_criteria(chat_id, pk):
+    from watch_forms import get_criteria
+    criteria = get_criteria(chat_id)
+    form = UserGeneralInformation.objects.filter(pk=pk)[0]
+    form_intention = UserStatus.objects.filter(status_for_user_id=pk)[0].user_intention
+    if criteria['search_what'] == 1 and form_intention == 1:
+        return False
+    if criteria['neighbor_gender'] == 1 and not form.user_gender:
+        return False
+    elif criteria['neighbor_gender'] == 2 and form.user_gender:
+        return False
+    elif criteria['neighbor_class'] == 1 and form.user_class not in [1, 2]:
+        return False
+    elif criteria['neighbor_class'] == 2 and form.user_class not in [3, 4]:
+        return False
+    elif criteria['neighbor_class'] == 3 and form.user_class not in [5, 6]:
+        return False
+    elif criteria['neighbor_class'] == 4 and form.user_class not in [1, 4]:
+        return False
+    elif criteria['neighbor_class'] == 5 and form.user_class != 7:
+        return False
+    if criteria['search_what'] == 2 and form_intention == 1:
+        price = ApartmentOwner.objects.filter(apartment_owner_id=pk)[0].price
+        if price > criteria['required_price']:
+            return False
+    return True
+
+
+@sync_to_async
+def get_pk_from_chat_id(chat_id):
+    from bot.models import UserGeneralInformation
+    if UserGeneralInformation.objects.filter(chat_id=chat_id).exists():
+        user = UserGeneralInformation.objects.filter(chat_id=chat_id)[0]
+        pk = user.pk
+        return pk
+    else:
+        return 'Error: get_pk_from_chat_id: Пользователя не существует'

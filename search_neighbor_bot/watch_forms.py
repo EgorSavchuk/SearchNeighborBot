@@ -3,6 +3,8 @@ import os
 from asgiref.sync import sync_to_async
 from createbot import dp, bot
 from aiogram import types
+import logging
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "search_neighbor_bot.settings")
 django.setup()
 from bot.models import UserGeneralInformation, UserCriteria, UserStatus, ApartmentOwner
@@ -101,8 +103,9 @@ async def show_profiles(message):
     from getform import get_form
     from lib import print_form
     array = await get_user_watched(message.chat.id)
+    logging.warning(f'watched :: {array}')
     pk = await get_new_profiles(message.chat.id)
-    if pk == 'NoNew' and len(array) != 0:
+    if pk == 'NoNew':
         if len(array) == 0:
             await message.answer("Анкет по твоим критериям еще не создали, можешь поменять их или подождать ")
         else:
@@ -130,7 +133,7 @@ async def do_if_like(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text="dislike")
-async def do_if_like(call: types.CallbackQuery):
+async def do_if_dislike(call: types.CallbackQuery):
     await show_profiles(call.message)
 
 
@@ -209,7 +212,10 @@ def search_match_v2(chat_id, last):
 
 @sync_to_async
 def get_matches(chat_id):
-    matches = UserGeneralInformation.objects.filter(chat_id=chat_id)[0].matches
+    user = UserGeneralInformation.objects.filter(chat_id=chat_id)[0]
+    logging.warning(f'user_in_func :: {user}')
+    matches = user.matches
+    logging.warning(f'matches_in_func :: {matches}')
     return matches
 
 
@@ -229,3 +235,13 @@ def get_contacts(match):
                f'{vk}\n' \
                f'<b>Ссылка telegram:</b>\n' \
                f'@{tg}'
+
+
+@sync_to_async
+def get_users_chats():
+    users = UserGeneralInformation.objects.all()
+    chats = []
+    if users is not None:
+        for user in users:
+            chats.append(user.chat_id)
+    return chats

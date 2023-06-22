@@ -13,11 +13,12 @@ class UserGeneralInformation(models.Model):  # Таблица с общей ин
     user_gender = models.BooleanField("Пол пользователя - Мужской")
     user_class = models.IntegerField("Курс пользователя")
     neighbor_about = models.CharField("О соседе", max_length=1000)
-    watched_profiles = ArrayField(ArrayField(models.IntegerField(), blank=True, null=True), default=list)
+    watched_profiles = ArrayField(models.IntegerField(), blank=True, null=True, default=list)
     # Просмотренные анкеты (pk)
-    matches = ArrayField(ArrayField(models.IntegerField(), blank=True, null=True), default=list)
+    matches = ArrayField(models.IntegerField(), blank=True, null=True, default=list)
     # Мэтчи пользователя
     liked_user = models.ManyToManyField("self", blank=True, symmetrical=False)  # Пользователь, чья анкета понравилась
+    watched_matches = ArrayField(models.IntegerField(), blank=True, null=True, default=list)
 
     def __str__(self):
         return f' Пользователь {self.name}'
@@ -34,7 +35,7 @@ class ApartmentOwner(models.Model):  # Таблица с данными о кв�
     time_to_hse = models.CharField("Время до корпусов вышки от квартиры", max_length=300, blank=True)
     price = models.IntegerField("Цена квартиры", blank=True)
     about_apartment = models.TextField("О квартире", blank=True)
-    apartment_images = ArrayField(ArrayField(models.CharField(max_length=1000)))
+    apartment_images = ArrayField(models.CharField(max_length=1000))
 
     def __str__(self):
         return f' Информация о квартире пользователя {self.apartment_owner}'

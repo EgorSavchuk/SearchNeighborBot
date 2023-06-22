@@ -290,7 +290,11 @@ def delete_profile(chat_id):
     from bot.models import UserStatus
     from lib import get_pk_from_chat_id
     pk = get_pk_from_chat_id(chat_id)
+    if pk == 'Error: get_pk_from_chat_id: Пользователя не существует':
+        return False
     user_criteria_for_delete = UserCriteria.objects.get(for_user_id=pk)
+    if user_criteria_for_delete is None:
+        return False
     user_status_for_delete = UserStatus.objects.get(status_for_user_id=pk)
     user_general_info = UserGeneralInformation.objects.get(id=pk)
     if user_status_for_delete.user_intention == 1:
@@ -310,3 +314,26 @@ def delete_profile(chat_id):
     user_criteria_for_delete.delete()
     user_status_for_delete.delete()
     user_general_info.delete()
+    return True
+
+
+@sync_to_async
+def get_watched_matches(chat_id):
+    user = UserGeneralInformation.objects.filter(chat_id=chat_id).first()
+    if user is None:
+        return 'Error: user with this chat_id is not exist'
+    return user.watched_matches
+
+
+@sync_to_async
+def clear_watched_matches(chat_id):
+    user = UserGeneralInformation.objects.filter(chat_id=chat_id).first()
+    user.watched_matches.clear()
+    user.save()
+
+
+@sync_to_async
+def add_watched_matches(chat_id, match):
+    user = UserGeneralInformation.objects.filter(chat_id=chat_id).first()
+    user.watched_matches.append(match)
+    user.save()

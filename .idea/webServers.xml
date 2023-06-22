@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="28d6c770-28ba-41ce-a808-7b3d3fef8276" name="BSERVER">
+        <fileTransfer rootFolder="/home/egor" accessType="SFTP" host="64.225.108.76" port="22" sshConfigId="54d5092b-6492-4c7a-9a04-6db076487b7a" sshConfig="egor@64.225.108.76:22 agent" authAgent="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
